@@ -1,0 +1,47 @@
+name: Build CI
+
+on:
+  push:
+    branches: ["develop"]
+  pull_request:
+    branches: ["develop"]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Build Android (Docker)
+        # This runs the Docker wrapper script mentioned in BUILDING.md
+        # It produces bin/ikemen-go.apk, bin/libmain.so, and lib/*.so
+        run: |
+          chmod +x build/build_android.sh
+          ./build/build_android.sh
+          echo
+          echo "==> Outputs:"
+          ls -lah bin/ lib/ || true
+          test -f bin/libmain.so
+          test -f bin/ikemen-go.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ikemen-go-apk
+          path: bin/ikemen-go.apk
+          retention-days: 7
+
+      - name: Upload Libs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ikemen-go-libs
+          path: |
+            bin/libmain.so
+            lib/*.so
+          retention-days: 7
