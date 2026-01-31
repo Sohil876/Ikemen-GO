@@ -175,6 +175,9 @@ func realMain() {
 		// For Android, let's see exactly what failed
 		panic(err)
 	}
+	if runtime.GOOS == "android" {
+        cfg.Video.RenderMode = "OpenGL 2.1"
+    }
 	sys.cfg = *cfg
 	// Logcat("LOG: Config Loaded. System Script: " + sys.cfg.Config.System)
 
@@ -191,9 +194,9 @@ func realMain() {
 	ftemp.Close()
 
     // Android: respect OpenGL 2.1 from config.ini, otherwise force GLES3.2
-    if runtime.GOOS == "android" && sys.cfg.Video.RenderMode != "OpenGL 2.1" {
-        sys.cfg.Video.RenderMode = "OpenGL ES 3.2"
-    }
+    // if runtime.GOOS == "android" && sys.cfg.Video.RenderMode != "OpenGL 2.1" {
+//         sys.cfg.Video.RenderMode = "OpenGL ES 3.2"
+//     }
 
 	// Initialize game and create window
 	// This is where the window is born!

@@ -1045,7 +1045,7 @@ function build() {
 		local X11_MOCKS="-DDisplay=void -DXVisualInfo=void -DXID=long -DWindow=long -DPixmap=long -DFont=long -DBool=int -DStatus=int -DColormap=long"
 		# MANUALLY define flags for Android to avoid pkg-config errors
 		export CGO_CFLAGS="-I$ANDROID_DEPS_PATH/include -I$ANDROID_DEPS_PATH/include/SDL2 $X11_MOCKS -DNOX11 -DGLX_STUBS ${CGO_CFLAGS:-}"
-		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter $ANDROID_DEPS_PATH/lib/libGL.a"
+		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter -Wl,--whole-archive $ANDROID_DEPS_PATH/lib/libGL.a -Wl,--no-whole-archive"
 		# Link against Android system libraries (GLES, OpenSLES, log)
 		export CGO_LDFLAGS="${deps_libs} ${CGO_LDFLAGS:-} -lGLESv2 -lOpenSLES -llog -landroid -lEGL -Wl,-z,max-page-size=16384"
 	else
