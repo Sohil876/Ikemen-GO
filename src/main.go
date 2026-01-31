@@ -61,19 +61,30 @@ func realMain() {
 	if runtime.GOOS == "android" {
 		Logcat("Inside realMain...")
 		runtime.LockOSThread()
-		sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
-		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
-		sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 2)
-		sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
-		sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 0)
-		sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
-		// sdl.SetHint("SDL_VIDEO_EXTERNAL_CONTEXT", "0")
-		// sdl.SetHint("SDL_HIDAPI_IGNORE_DEVICES", "1")
-		// sdl.SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1")
-		// sdl.SetHint(sdl.HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight")
-		// sdl.SetHint("SDL_ANDROID_TRAP_BACK_BUTTON", "1")
-		// sdl.SetHint("SDL_JOYSTICK_HIDAPI", "0")
-		// sdl.SetHint("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH", "1")
+		/* if sys.cfg.Video.RenderMode == "OpenGL 2.1" {
+		    // --- ANDROID PATH: Force GLES2 context for gl4es ---
+    		// gl4es will emulate desktop GL 2.1 on top of GLES2.
+    		// Ask SDL for an ES context
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
+    		// No forward-compatible / core flags on ES
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)
+		} else {
+		    sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 2)
+    		sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
+    		sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 0)
+    		sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
+    		// sdl.SetHint("SDL_VIDEO_EXTERNAL_CONTEXT", "0")
+    		// sdl.SetHint("SDL_HIDAPI_IGNORE_DEVICES", "1")
+    		// sdl.SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1")
+    		// sdl.SetHint(sdl.HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight")
+    		// sdl.SetHint("SDL_ANDROID_TRAP_BACK_BUTTON", "1")
+    		// sdl.SetHint("SDL_JOYSTICK_HIDAPI", "0")
+    		// sdl.SetHint("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH", "1")
+		} */
 
 		if sys.baseDir == "" {
 			panic("FATAL: Android baseDir not set")
@@ -164,10 +175,6 @@ func realMain() {
 		// For Android, let's see exactly what failed
 		panic(err)
 	}
-	// Force to OpenGL ES 3.2 for Android
-	if runtime.GOOS == "android" {
-		cfg.Video.RenderMode = "OpenGL ES 3.2"
-	}
 	sys.cfg = *cfg
 	// Logcat("LOG: Config Loaded. System Script: " + sys.cfg.Config.System)
 
@@ -182,6 +189,11 @@ func realMain() {
 		panic(err)
 	}
 	ftemp.Close()
+
+    // Android: respect OpenGL 2.1 from config.ini, otherwise force GLES3.2
+    if runtime.GOOS == "android" && sys.cfg.Video.RenderMode != "OpenGL 2.1" {
+        sys.cfg.Video.RenderMode = "OpenGL ES 3.2"
+    }
 
 	// Initialize game and create window
 	// This is where the window is born!

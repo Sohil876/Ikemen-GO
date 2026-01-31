@@ -78,7 +78,13 @@ func (s *System) newWindow(w, h int) (*Window, error) {
 		}
 
 		// 4. RENDERER PROFILE SETUP
-		if sys.cfg.Video.RenderMode == "OpenGL ES 3.2" {
+		if runtime.GOOS == "android" && sys.cfg.Video.RenderMode == "OpenGL 2.1" {
+		    sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
+    		sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)
+    		windowFlags |= sdl.WINDOW_OPENGL
+		} else if sys.cfg.Video.RenderMode == "OpenGL ES 3.2" {
 			sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
 			sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
 			sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 2)
