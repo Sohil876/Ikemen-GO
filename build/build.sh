@@ -570,28 +570,28 @@ function patch_gl4es_android_mk() {
 
     echo "==> Patching gl4es Android.mk"
 
-    [[ -f "$mk" ]] || { echo "FATAL: Android.mk not found"; exit 1; }
+    #[[ -f "$mk" ]] || { echo "FATAL: Android.mk not found"; exit 1; }
 
     # Add LOCAL_MODULE_FILENAME := libGL
-    if ! grep -q 'LOCAL_MODULE_FILENAME := libGL' "$mk"; then
-        sed -i '/LOCAL_MODULE := GL/a LOCAL_MODULE_FILENAME := libGL' "$mk"
-    fi
+    # if ! grep -q 'LOCAL_MODULE_FILENAME := libGL' "$mk"; then
+#         sed -i '/LOCAL_MODULE := GL/a LOCAL_MODULE_FILENAME := libGL' "$mk"
+#     fi
 
     # Force GLES2 only + disable GL1 / GL3 (single insertion)
-    if ! grep -q 'USE_ES2_ONLY' "$mk"; then
-        sed -i '/DEFAULT_ES=2/a LOCAL_CFLAGS += -DUSE_ES2_ONLY\nLOCAL_CFLAGS += -DNO_GL1\nLOCAL_CFLAGS += -DNO_GL3' "$mk"
-    fi
+    # if ! grep -q 'USE_ES2_ONLY' "$mk"; then
+#         sed -i '/DEFAULT_ES=2/a LOCAL_CFLAGS += -DUSE_ES2_ONLY\nLOCAL_CFLAGS += -DNO_GL1\nLOCAL_CFLAGS += -DNO_GL3' "$mk"
+#     fi
 
     # Force SONAME = libGL.so
-    if ! grep -q 'soname,libGL.so' "$mk"; then
-        sed -i '/LOCAL_LDLIBS/a LOCAL_LDFLAGS += -Wl,-soname,libGL.so' "$mk"
-    fi
+    # if ! grep -q 'soname,libGL.so' "$mk"; then
+#         sed -i '/LOCAL_LDLIBS/a LOCAL_LDFLAGS += -Wl,-soname,libGL.so' "$mk"
+#     fi
 
     # Remove STATICLIB
-    sed -i '/LOCAL_CFLAGS += -DSTATICLIB/d' "$mk"
+    #sed -i '/LOCAL_CFLAGS += -DSTATICLIB/d' "$mk"
 
     # Replace static build with shared build
-    sed -i 's/include $(BUILD_STATIC_LIBRARY)/include $(BUILD_SHARED_LIBRARY)/' "$mk"
+    #sed -i 's/include $(BUILD_STATIC_LIBRARY)/include $(BUILD_SHARED_LIBRARY)/' "$mk"
 
     echo "==> Android.mk patched"
 }
@@ -619,18 +619,17 @@ function build_gl4es_android() {
         APP_ABI=arm64-v8a \
         -j"$(getconf _NPROCESSORS_ONLN || echo 2)"
 
-    # Android.mk shared lib output path:
-    #   gl4es-src/libs/arm64-v8a/libGL.so
+    find -name 'libGL.a' | head -n1 || true
     if [[ -f /.dockerenv ]]; then
-        GL4ES_LIB="libs/arm64-v8a/libGL.so"
+        GL4ES_LIB="obj/local/arm64-v8a/libGL.a"
         GL4ES_HEADERS="include"
     else
-        GL4ES_LIB="$src/libs/arm64-v8a/libGL.so"
+        GL4ES_LIB="$src/obj/local/arm64-v8a/libGL.a"
         GL4ES_HEADERS="$src/include"
     fi
     if [[ -f "$GL4ES_LIB" ]]; then
         mkdir -p "$ANDROID_DEPS_PATH/lib"
-        mv "$GL4ES_LIB" "$ANDROID_DEPS_PATH/lib/libGL.so"
+        mv "$GL4ES_LIB" "$ANDROID_DEPS_PATH/lib/libGL.a"
         mkdir -p "$ANDROID_DEPS_PATH/include"
         cp -r "$GL4ES_HEADERS/." "$ANDROID_DEPS_PATH/include/"
     else
@@ -639,7 +638,7 @@ function build_gl4es_android() {
     fi
 
     echo "==> gl4es installed:"
-    ls -lh "$ANDROID_DEPS_PATH/lib/libGL.so" || true
+    ls -lh "$ANDROID_DEPS_PATH/lib/" || true
     ls -lh "$ANDROID_DEPS_PATH/include/" || true
 
     popd >/dev/null
@@ -1046,9 +1045,9 @@ function build() {
 		local X11_MOCKS="-DDisplay=void -DXVisualInfo=void -DXID=long -DWindow=long -DPixmap=long -DFont=long -DBool=int -DStatus=int -DColormap=long"
 		# MANUALLY define flags for Android to avoid pkg-config errors
 		export CGO_CFLAGS="-I$ANDROID_DEPS_PATH/include -I$ANDROID_DEPS_PATH/include/SDL2 $X11_MOCKS -DNOX11 -DGLX_STUBS ${CGO_CFLAGS:-}"
-		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter -lGL"
+		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter $ANDROID_DEPS_PATH/lib/libGL.a"
 		# Link against Android system libraries (GLES, OpenSLES, log)
-		export CGO_LDFLAGS="${deps_libs} ${CGO_LDFLAGS:-} -lGLESv2 -lOpenSLES -llog -Wl,-z,max-page-size=16384"
+		export CGO_LDFLAGS="${deps_libs} ${CGO_LDFLAGS:-} -lGLESv2 -lOpenSLES -llog -landroid -lEGL -Wl,-z,max-page-size=16384"
 	else
 		maybe_build_ffmpeg
 		export PKG_CONFIG="${PKG_CONFIG:-pkg-config}"
