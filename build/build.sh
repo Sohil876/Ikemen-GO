@@ -565,6 +565,81 @@ function build_ffmpeg() {
 	popd >/dev/null
 }
 
+function patch_gl4es_android_mk() {
+    local mk="$BUILDDIR/gl4es-src/Android.mk"
+
+    echo "==> Patching gl4es Android.mk"
+
+    [[ -f "$mk" ]] || { echo "FATAL: Android.mk not found"; exit 1; }
+
+    # Add LOCAL_MODULE_FILENAME := libGL
+    if ! grep -q 'LOCAL_MODULE_FILENAME := libGL' "$mk"; then
+        sed -i '/LOCAL_MODULE := GL/a LOCAL_MODULE_FILENAME := libGL' "$mk"
+    fi
+
+    # Force GLES2 only + disable GL1 / GL3 (single insertion)
+    if ! grep -q 'USE_ES2_ONLY' "$mk"; then
+        sed -i '/DEFAULT_ES=2/a LOCAL_CFLAGS += -DUSE_ES2_ONLY\nLOCAL_CFLAGS += -DNO_GL1\nLOCAL_CFLAGS += -DNO_GL3' "$mk"
+    fi
+
+    # Force SONAME = libGL.so
+    if ! grep -q 'soname,libGL.so' "$mk"; then
+        sed -i '/LOCAL_LDLIBS/a LOCAL_LDFLAGS += -Wl,-soname,libGL.so' "$mk"
+    fi
+
+    # Remove STATICLIB
+    sed -i '/LOCAL_CFLAGS += -DSTATICLIB/d' "$mk"
+
+    # Replace static build with shared build
+    sed -i 's/include $(BUILD_STATIC_LIBRARY)/include $(BUILD_SHARED_LIBRARY)/' "$mk"
+
+    echo "==> Android.mk patched"
+}
+
+function build_gl4es_android() {
+    echo "==> Building gl4es (OpenGL2 → GLES2) via Android.mk"
+
+    local src="$BUILDDIR/gl4es-src"
+
+    if [[ ! -d "$src" ]]; then
+        git clone https://github.com/ptitSeb/gl4es.git "$src"
+    fi
+
+    # Patch Android.mk before building
+    patch_gl4es_android_mk
+
+    pushd "$src" >/dev/null
+
+    echo "==> Running ndk-build..."
+
+    "$ANDROID_NDK_HOME/ndk-build" \
+        NDK_PROJECT_PATH=. \
+        APP_BUILD_SCRIPT=Android.mk \
+        APP_PLATFORM=android-21 \
+        APP_ABI=arm64-v8a \
+        -j"$(getconf _NPROCESSORS_ONLN || echo 2)"
+
+    # Android.mk shared lib output path:
+    #   gl4es-src/libs/arm64-v8a/libGL.so
+    if [[ -f /.dockerenv ]]; then
+        GL4ES_LIB="libs/arm64-v8a/libGL.so"
+    else
+        GL4ES_LIB="$src/libs/arm64-v8a/libGL.so"
+    fi
+    if [[ -f "$GL4ES_LIB" ]]; then
+        mkdir -p "$ANDROID_DEPS_PATH/lib"
+        mv "$GL4ES_LIB" "$ANDROID_DEPS_PATH/lib/libGL.so"
+    else
+        echo "FATAL: libGL.so not found at $GL4ES_LIB"
+        exit 1
+    fi
+
+    echo "==> gl4es installed:"
+    ls -lh "$ANDROID_DEPS_PATH/lib/libGL.so" || true
+
+    popd >/dev/null
+}
+
 function build_libxmp_android() {
 	echo "==> Building LibXMP for Android..."
 	local src="$BUILDDIR/libxmp-src"
@@ -752,6 +827,7 @@ function prepare_android_deps() {
 	build_sdl2_android
 	build_libxmp_android
 	build_ffmpeg
+	build_gl4es_android
 	create_dummy_gl_pc
 }
 
@@ -963,7 +1039,7 @@ function build() {
 		patch_go_sdl2_android
 		# MANUALLY define flags for Android to avoid pkg-config errors
 		export CGO_CFLAGS="-I$ANDROID_DEPS_PATH/include -I$ANDROID_DEPS_PATH/include/SDL2 ${CGO_CFLAGS:-}"
-		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter"
+		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter -lGL"
 		# Link against Android system libraries (GLES, OpenSLES, log)
 		export CGO_LDFLAGS="${deps_libs} ${CGO_LDFLAGS:-} -lGLESv2 -lOpenSLES -llog -Wl,-z,max-page-size=16384"
 	else
