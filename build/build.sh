@@ -623,12 +623,16 @@ function build_gl4es_android() {
     #   gl4es-src/libs/arm64-v8a/libGL.so
     if [[ -f /.dockerenv ]]; then
         GL4ES_LIB="libs/arm64-v8a/libGL.so"
+        GL4ES_HEADERS="include"
     else
         GL4ES_LIB="$src/libs/arm64-v8a/libGL.so"
+        GL4ES_HEADERS="$src/include"
     fi
     if [[ -f "$GL4ES_LIB" ]]; then
         mkdir -p "$ANDROID_DEPS_PATH/lib"
         mv "$GL4ES_LIB" "$ANDROID_DEPS_PATH/lib/libGL.so"
+        mkdir -p "$ANDROID_DEPS_PATH/include"
+        cp -r "$GL4ES_HEADERS/." "$ANDROID_DEPS_PATH/include/"
     else
         echo "FATAL: libGL.so not found at $GL4ES_LIB"
         exit 1
@@ -636,6 +640,7 @@ function build_gl4es_android() {
 
     echo "==> gl4es installed:"
     ls -lh "$ANDROID_DEPS_PATH/lib/libGL.so" || true
+    ls -lh "$ANDROID_DEPS_PATH/include/" || true
 
     popd >/dev/null
 }
@@ -1037,8 +1042,10 @@ function build() {
 		ensure_go_flags_android
 		prepare_android_deps
 		patch_go_sdl2_android
+		# x11 mocks for gl4es
+		local X11_MOCKS="-DDisplay=void -DXVisualInfo=void -DXID=long -DWindow=long -DPixmap=long -DFont=long -DBool=int -DStatus=int -DColormap=long"
 		# MANUALLY define flags for Android to avoid pkg-config errors
-		export CGO_CFLAGS="-I$ANDROID_DEPS_PATH/include -I$ANDROID_DEPS_PATH/include/SDL2 ${CGO_CFLAGS:-}"
+		export CGO_CFLAGS="-I$ANDROID_DEPS_PATH/include -I$ANDROID_DEPS_PATH/include/SDL2 $X11_MOCKS -DNOX11 -DGLX_STUBS ${CGO_CFLAGS:-}"
 		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter -lGL"
 		# Link against Android system libraries (GLES, OpenSLES, log)
 		export CGO_LDFLAGS="${deps_libs} ${CGO_LDFLAGS:-} -lGLESv2 -lOpenSLES -llog -Wl,-z,max-page-size=16384"
