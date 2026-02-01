@@ -143,7 +143,8 @@ func eglGetProcAddress(name string) unsafe.Pointer {
 }
 
 func selectRenderer(cfgVal string) (Renderer, FontRenderer) {
-	return &Renderer_GLES32{}, &FontRenderer_GLES32{}
+	//return &Renderer_GLES32{}, &FontRenderer_GLES32{}
+	return &Renderer_GL21{}, &FontRenderer_GL21{}
 }
 
 func getAndroidFilesDir() string {
