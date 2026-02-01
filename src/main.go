@@ -63,16 +63,15 @@ func realMain() {
 		// Configure gl4es to convert Desktop Shaders to GLES2
 		// This makes gl4es to translate 'attribute/varying' to GLES compatible syntax.
 		//os.Setenv("LIBGL_ES", "2")
-		os.Setenv("LIBGL_GLSHADERS", "1") 
+		os.Setenv("LIBGL_GLSHADERS", "1")
+		os.Setenv("LIBGL_VERSION", "2.1")
 		runtime.LockOSThread()
-		sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
+	    // Ask SDL for an ES context
+    	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
+    	// No forward-compatible / core flags on ES
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)
-    	// GL4ES often needs these buffers explicitly requested on Android
-		sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
-		sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 8)
-		sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
 		/* if sys.cfg.Video.RenderMode == "OpenGL 2.1" {
 		    // --- ANDROID PATH: Force GLES2 context for gl4es ---
     		// gl4es will emulate desktop GL 2.1 on top of GLES2.

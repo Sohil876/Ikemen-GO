@@ -26,14 +26,12 @@ func (s *System) newWindow(w, h int) (*Window, error) {
 
 	if runtime.GOOS == "android" {
 	    // Renderer profile setup
-	    sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
+	    // Ask SDL for an ES context
+    	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
+    	// No forward-compatible / core flags on ES
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)
-    	// GL4ES often needs these buffers explicitly requested on Android
-		sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
-		sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 8)
-		sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
 		/* if sys.cfg.Video.RenderMode == "OpenGL 2.1" {
 		    sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
     		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
