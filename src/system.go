@@ -351,7 +351,8 @@ func (s *System) init(w, h int32) *lua.LState {
 	_, forceWindowed := s.cmdFlags["-windowed"]
 	s.window.fullscreen = s.cfg.Video.Fullscreen && !forceWindowed
 
-	if strings.Contains(s.cfg.Video.RenderMode, "OpenGL") {
+    // Always create gl context on android no matter what it detects in config
+	if runtime.GOOS == "android" || strings.Contains(s.cfg.Video.RenderMode, "OpenGL") {
 		if ctx, err := s.window.GLCreateContext(); err != nil {
 			Logcat("GL Context Creation Failed: " + err.Error())
 			s.errLog.Fatalf("Could not initialize context :( Reason? %s", err)
