@@ -568,7 +568,7 @@ function build_ffmpeg() {
 function patch_gl4es_android_mk() {
     local mk="$BUILDDIR/gl4es-src/Android.mk"
 
-    echo "==> Patching gl4es Android.mk"
+    #echo "==> Patching gl4es Android.mk"
 
     #[[ -f "$mk" ]] || { echo "FATAL: Android.mk not found"; exit 1; }
 
@@ -593,7 +593,7 @@ function patch_gl4es_android_mk() {
     # Replace static build with shared build
     #sed -i 's/include $(BUILD_STATIC_LIBRARY)/include $(BUILD_SHARED_LIBRARY)/' "$mk"
 
-    echo "==> Android.mk patched"
+    #echo "==> Android.mk patched"
 }
 
 function build_gl4es_android() {
@@ -606,11 +606,16 @@ function build_gl4es_android() {
     fi
 
     # Patch Android.mk before building
-    patch_gl4es_android_mk
+    #patch_gl4es_android_mk
 
     pushd "$src" >/dev/null
 
     echo "==> Running ndk-build..."
+
+    # Clean previous builds
+    "$ANDROID_NDK_HOME/ndk-build" \
+        NDK_PROJECT_PATH=. \
+        APP_BUILD_SCRIPT=Android.mk clean >/dev/null 2>&1 || true
 
     "$ANDROID_NDK_HOME/ndk-build" \
         NDK_PROJECT_PATH=. \
@@ -629,11 +634,14 @@ function build_gl4es_android() {
     fi
     if [[ -f "$GL4ES_LIB" ]]; then
         mkdir -p "$ANDROID_DEPS_PATH/lib"
-        mv "$GL4ES_LIB" "$ANDROID_DEPS_PATH/lib/libGL.a"
+        mv "$GL4ES_LIB" "$ANDROID_DEPS_PATH/lib/libgl4es.a"
         mkdir -p "$ANDROID_DEPS_PATH/include"
         cp -r "$GL4ES_HEADERS/." "$ANDROID_DEPS_PATH/include/"
+        # Create a DUMMY (Empty) libGL.a, this tricks go-gl into thinking it found the library, preventing "missing -lGL" errors on using whole archive.
+        echo "==> Creating DUMMY libGL.a..."
+        ar -rcs "$ANDROID_DEPS_PATH/lib/libGL.a"
     else
-        echo "FATAL: libGL.so not found at $GL4ES_LIB"
+        echo "FATAL: libGL.a not found at $GL4ES_LIB"
         exit 1
     fi
 
@@ -1038,6 +1046,10 @@ function create_delay_import_libs_windows() {
 # --- Build functions ---
 function build() {
 	if [[ "$GOOS" == "android" ]]; then
+    	# [FIX 3] ABSOLUTELY CRITICAL: Reset flags
+        # This prevents double-linking if the function is run twice or if env vars persist.
+        unset CGO_CFLAGS
+        unset CGO_LDFLAGS
 		ensure_go_flags_android
 		prepare_android_deps
 		patch_go_sdl2_android
@@ -1045,7 +1057,7 @@ function build() {
 		local X11_MOCKS="-DDisplay=void -DXVisualInfo=void -DXID=long -DWindow=long -DPixmap=long -DFont=long -DBool=int -DStatus=int -DColormap=long"
 		# MANUALLY define flags for Android to avoid pkg-config errors
 		export CGO_CFLAGS="-I$ANDROID_DEPS_PATH/include -I$ANDROID_DEPS_PATH/include/SDL2 $X11_MOCKS -DNOX11 -DGLX_STUBS ${CGO_CFLAGS:-}"
-		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter $ANDROID_DEPS_PATH/lib/libGL.a"
+		local deps_libs="-L$ANDROID_DEPS_PATH/lib -lSDL2 -lxmp -lavformat -lavcodec -lavutil -lswscale -lswresample -lavfilter -Wl,--whole-archive $ANDROID_DEPS_PATH/lib/libgl4es.a -Wl,--no-whole-archive"
 		# Link against Android system libraries (GLES, OpenSLES, log)
 		export CGO_LDFLAGS="${deps_libs} ${CGO_LDFLAGS:-} -lGLESv2 -lOpenSLES -llog -landroid -lEGL -Wl,-z,max-page-size=16384"
 	else
