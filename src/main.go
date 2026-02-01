@@ -60,12 +60,16 @@ func main() {
 func realMain() {
 	if runtime.GOOS == "android" {
 		Logcat("Inside realMain...")
-		// Configure gl4es to convert Desktop Shaders to GLES2
+		// This forces gl4es to add "precision mediump float;" to shaders.
 		// This makes gl4es to translate 'attribute/varying' to GLES compatible syntax.
 		os.Setenv("LIBGL_ES", "2")
-		// This forces gl4es to add "precision mediump float;" to shaders.
+		// When the shader crashes, this dumps the ACTUAL code to the log.
+		// We will be able to see exactly what Line 34 is.
+		os.Setenv("LIBGL_LOGSHADERERROR", "1")
 		// Without this, Mali GPUs crash with "Storage qualifier" errors.
-		os.Setenv("LIBGL_DEFAULT_PRECISION", "mediump")
+		os.Setenv("LIBGL_DEFAULT_PRECISION", "highp")
+		// This stops gl4es from injecting code that some Mali drivers hate.
+		os.Setenv("LIBGL_NOINTOVLHACK", "1")
 		// Enable shader conversion
 		os.Setenv("LIBGL_GLSHADERS", "1")
 		// Set GL version
