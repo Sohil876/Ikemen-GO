@@ -62,8 +62,13 @@ func realMain() {
 		Logcat("Inside realMain...")
 		// Configure gl4es to convert Desktop Shaders to GLES2
 		// This makes gl4es to translate 'attribute/varying' to GLES compatible syntax.
-		//os.Setenv("LIBGL_ES", "2")
+		os.Setenv("LIBGL_ES", "2")
+		// This forces gl4es to add "precision mediump float;" to shaders.
+		// Without this, Mali GPUs crash with "Storage qualifier" errors.
+		os.Setenv("LIBGL_DEFAULT_PRECISION", "mediump")
+		// Enable shader conversion
 		os.Setenv("LIBGL_GLSHADERS", "1")
+		// Set GL version
 		os.Setenv("LIBGL_VERSION", "2.1")
 		runtime.LockOSThread()
 	    // Ask SDL for an ES context
