@@ -1,8 +1,6 @@
 // IF YOU MAKE CHANGES TO THIS FILE, YOU MUST ALSO MAKE
 // EQUIVALENT CHANGES TO render_gl_gl32.go
 
-//go:build !android
-
 package main
 
 import (

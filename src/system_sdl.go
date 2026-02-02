@@ -27,11 +27,11 @@ func (s *System) newWindow(w, h int) (*Window, error) {
 	if runtime.GOOS == "android" {
 	    // Renderer profile setup
 	    // Ask SDL for an ES context
-    	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
+    	/*sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
     	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
     	// No forward-compatible / core flags on ES
-    	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)
+    	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)*/
 		/* if sys.cfg.Video.RenderMode == "OpenGL 2.1" {
 		    sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
     		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)

@@ -143,8 +143,17 @@ func eglGetProcAddress(name string) unsafe.Pointer {
 }
 
 func selectRenderer(cfgVal string) (Renderer, FontRenderer) {
-	//return &Renderer_GLES32{}, &FontRenderer_GLES32{}
-	return &Renderer_GL21{}, &FontRenderer_GL21{}
+    var gfx Renderer
+	var gfxFont FontRenderer
+	// Now we proceed to init the render.
+	if cfgVal == "OpenGL 2.1" {
+		gfx = &Renderer_GL21{}
+		gfxFont = &FontRenderer_GL21{}
+	} else {
+		gfx = &Renderer_GLES32{}
+		gfxFont = &FontRenderer_GLES32{}
+	}
+	return gfx, gfxFont
 }
 
 func getAndroidFilesDir() string {
