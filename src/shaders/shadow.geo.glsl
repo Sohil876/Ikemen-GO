@@ -1,10 +1,11 @@
-#if __VERSION__ >= 130
+// FIX: Consistent check for Modern GL vs Legacy GL
+#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
     #define COMPAT_POS_IN(i) gl_in[i].gl_Position
     layout(triangle_strip, max_vertices = 18) out;
     uniform int layerOffset;
     #define LAYER_OFFSET layerOffset
     layout(triangles) in;
-    
+
     in float vColorIn[];
     in vec2 texcoordIn[];
     in vec4 FragPosIn[];
@@ -13,6 +14,26 @@
     out float vColor;
     out vec2 texcoord;
 #else
+    // --- LEGACY PATH (GLES 2.0 + Extensions) ---
+    #extension GL_EXT_geometry_shader4: enable
+    #define COMPAT_POS_IN(i) gl_PositionIn[i]
+    #define LAYER_OFFSET 0
+
+    varying in float vColorIn[3];
+    varying in vec2 texcoordIn[3];
+    varying in vec4 FragPosIn[3];
+
+    varying out vec4 FragPos;
+    varying out float vColor;
+    varying out vec2 texcoord;
+
+    // [CRITICAL FIX] Add Precision for Android
+    #ifdef GL_ES
+        precision highp float;
+        precision highp int;
+    #endif
+#endif
+
     #extension GL_EXT_geometry_shader4: enable
     #define COMPAT_POS_IN(i) gl_PositionIn[i]
     #define LAYER_OFFSET 0

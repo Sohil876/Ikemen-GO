@@ -8,7 +8,8 @@
     layout(location = 0) out vec2 texcoord;
 #else
     // OPENGL / GLES PATH
-    #if __VERSION__ >= 130 || defined(GL_ES)
+    // FIX: Only use Modern syntax (in/out) if GLES 3.0+ (Version 300)
+    #if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
         #define COMPAT_VARYING out
         #define COMPAT_ATTRIBUTE in
         #define COMPAT_TEXTURE texture
@@ -18,9 +19,15 @@
             precision highp int;
         #endif
     #else
+        // --- LEGACY PATH (GLES 2.0) ---
         #define COMPAT_VARYING varying 
         #define COMPAT_ATTRIBUTE attribute 
         #define COMPAT_TEXTURE texture2D
+        // [SAFETY] Enforce High Precision for Vertex Shader
+        #ifdef GL_ES
+            precision highp float;
+            precision highp int;
+        #endif
     #endif
 
     uniform mat4 modelview, projection;

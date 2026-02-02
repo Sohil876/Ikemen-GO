@@ -9,7 +9,8 @@ layout(push_constant, std430) uniform u {
 };
 layout(binding = 0) uniform sampler2D tex;
 #else
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax (in/out) if GLES 3.0+ (Version 300)
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#ifdef GL_ES
 			precision highp float;
 			precision highp int;
@@ -20,9 +21,15 @@ layout(binding = 0) uniform sampler2D tex;
 		#define COMPAT_FRAGCOLOR FragColor
 		out vec4 FragColor;
 	#else
+		// --- LEGACY PATH (GLES 2.0 / GL 2.1) ---
 		#define COMPAT_VARYING varying
 		#define COMPAT_TEXTURE texture2D
 		#define COMPAT_FRAGCOLOR gl_FragColor
+		// [CRITICAL FIX] Inject Precision for Android GLES 2.0
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+		#endif
 	#endif
 
 	// These must be STANDALONE for RegisterUniforms to work in GLES

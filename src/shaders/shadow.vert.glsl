@@ -57,7 +57,8 @@ layout(location = 2) out vec2 texcoord;
 layout(location = 3) out flat int lightIndex;
 #else
 	// GLES / OPENGL PATH
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax if GLES 3.0+ (Version 300)
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#define COMPAT_VARYING out
 		#define COMPAT_ATTRIBUTE in
 		#define COMPAT_TEXTURE texture
@@ -68,11 +69,23 @@ layout(location = 3) out flat int lightIndex;
 			#define GS_IN(x) x##In
 		#endif
 	#else
+		// --- LEGACY PATH (GLES 2.0) ---
 		#extension GL_EXT_gpu_shader4 : enable
 		#define COMPAT_VARYING varying 
 		#define COMPAT_ATTRIBUTE attribute 
 		#define COMPAT_TEXTURE texture2D
-		#define GS_IN(x) x##In
+
+		#ifdef GL_ES
+			// [CRITICAL FIX] Android GLES 2.0:
+			// 1. Add Precision
+			// 2. Use name "x" (not "xIn") because there is no Geometry Shader
+			precision highp float;
+			precision highp int;
+			#define GS_IN(x) x
+		#else
+			// Desktop Legacy (Uses Geometry Shader, so needs "xIn")
+			#define GS_IN(x) x##In
+		#endif
 	#endif
 
 	uniform mat4 model;
@@ -151,10 +164,12 @@ void main() {
 		{
 			float i = float(idx)*float(numVertices)+vertexId;
 			vec2 xy = vec2((i+0.5)/float(morphTargetTextureDimension)-floor(i/float(morphTargetTextureDimension)),(floor(i/float(morphTargetTextureDimension))+0.5)/float(morphTargetTextureDimension));
+			// FIX: Manual modulo because '%' is not supported in GLES 2.0
+			int m = idx - (idx / 4) * 4;
 			if(float(idx) < morphTargetOffset[0]){
-				pos += morphTargetWeight[idx/4][idx%4] * COMPAT_TEXTURE(morphTargetValues,xy);
+				pos += morphTargetWeight[idx/4][m] * COMPAT_TEXTURE(morphTargetValues,xy);
 			}else if(float(idx) >= morphTargetOffset[2] && float(idx) < morphTargetOffset[3]){
-				GS_IN(texcoord) += morphTargetWeight[idx/4][idx%4] * vec2(COMPAT_TEXTURE(morphTargetValues,xy));
+				GS_IN(texcoord) += morphTargetWeight[idx/4][m] * vec2(COMPAT_TEXTURE(morphTargetValues,xy));
 			}
 		}
 	}

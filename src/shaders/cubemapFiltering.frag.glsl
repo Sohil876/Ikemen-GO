@@ -16,7 +16,8 @@ layout(push_constant, std430) uniform u {
 layout(location = 0) in vec2 texcoord;
 layout(location = 0) out vec4 FragColor;
 #else
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax if GLES 3.0+ (Version 300) or Desktop 3.0+
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#define COMPAT_VARYING in
 		#define COMPAT_TEXTURE_CUBE_LOD textureLod
 		#ifdef GL_ES
@@ -25,11 +26,17 @@ layout(location = 0) out vec4 FragColor;
 		#endif
 		out vec4 FragColor;
 	#else
+		// --- LEGACY PATH (GLES 2.0 / GL 2.1) ---
 		#extension GL_EXT_gpu_shader4 : enable
 		#extension GL_ARB_shader_texture_lod : enable
 		#define COMPAT_VARYING varying
 		#define FragColor gl_FragColor
 		#define COMPAT_TEXTURE_CUBE_LOD textureCubeLod
+		// [CRITICAL FIX] Add precision for Android GLES 2.0
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+		#endif
 	#endif
 	uniform samplerCube cubeMap;
 	uniform int sampleCount, distribution, width, currentFace;

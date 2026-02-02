@@ -35,7 +35,8 @@ layout(location = 2) in vec2 texcoord;
 layout(location = 3) in flat int lightIndex;
 #else
 	// GLES / OPENGL PATH
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax (in/out) if GLES 3.0+ (Version 300)
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#define COMPAT_VARYING in
 		#define COMPAT_TEXTURE texture
 		#ifdef GL_ES
@@ -44,8 +45,14 @@ layout(location = 3) in flat int lightIndex;
 			precision highp sampler2DArray;
 		#endif
 	#else
+		// --- LEGACY PATH (GLES 2.0) ---
 		#define COMPAT_VARYING varying
 		#define COMPAT_TEXTURE texture2D
+		// [CRITICAL FIX] Add Precision for Android GLES 2.0
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+		#endif
 	#endif
 
 	uniform sampler2D tex;

@@ -8,7 +8,8 @@ layout(location = 0) in vec2 texcoord;
 layout(binding = 0) uniform sampler2D panorama;
 layout(location = 0) out vec4 FragColor;
 #else
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax (in/out) if GLES 3.0+ (Version 300)
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#define COMPAT_VARYING in
 		#define COMPAT_TEXTURE texture
 		#ifdef GL_ES
@@ -17,9 +18,15 @@ layout(location = 0) out vec4 FragColor;
 		#endif
 		out vec4 FragColor;
 	#else
+		// --- LEGACY PATH (GLES 2.0) ---
 		#define COMPAT_VARYING varying
 		#define FragColor gl_FragColor
 		#define COMPAT_TEXTURE texture2D
+		// [CRITICAL FIX] Add Precision for Android GLES 2.0
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+		#endif
 	#endif
 	COMPAT_VARYING vec2 texcoord;
 	uniform int currentFace;

@@ -6,12 +6,19 @@ layout(offset = 16) vec2 resolution;
 };
 layout(location = 0) out vec2 fragTexCoord;
 #else
-	#if __VERSION__ >= 130
+	// FIX: Consistent check for Modern GL vs Legacy GL
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#define COMPAT_VARYING out
 		#define COMPAT_ATTRIBUTE in
 	#else
+		// --- LEGACY PATH (GLES 2.0) ---
 		#define COMPAT_VARYING varying
 		#define COMPAT_ATTRIBUTE attribute
+		// [SAFETY] Enforce High Precision to match the Fragment Shader
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+		#endif
 	#endif
 
 	uniform vec2 resolution;

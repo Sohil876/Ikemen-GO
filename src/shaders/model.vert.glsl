@@ -44,7 +44,8 @@ layout(location = 5) out vec3 worldSpacePos;
 layout(location = 6) out vec4 lightSpacePos[4];
 #else
 	// GLES 3.2 / ANDROID PATH - Standard Uniforms
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax (in/out) if GLES 3.0+ (Version 300)
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#define COMPAT_VARYING out
 		#define COMPAT_ATTRIBUTE in
 		#define COMPAT_TEXTURE texture
@@ -54,9 +55,16 @@ layout(location = 6) out vec4 lightSpacePos[4];
 			precision highp sampler2D;
 		#endif
 	#else
+		// --- LEGACY PATH (GLES 2.0) ---
 		#define COMPAT_VARYING varying 
 		#define COMPAT_ATTRIBUTE attribute 
 		#define COMPAT_TEXTURE texture2D
+		// [CRITICAL FIX] Add Precision for Android GLES 2.0
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+			precision highp sampler2D;
+		#endif
 	#endif
 
 	uniform mat4 model, view, projection, normalMatrix;

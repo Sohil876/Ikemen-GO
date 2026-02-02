@@ -58,7 +58,8 @@
 	layout(location = 0) out vec4 FragColor;
 #else
 	// GLES / OPENGL PATH
-	#if __VERSION__ >= 130 || defined(GL_ES)
+	// FIX: Only use Modern syntax if GLES 3.0+ (Version 300)
+	#if __VERSION__ >= 130 || (defined(GL_ES) && __VERSION__ >= 300)
 		#ifdef GL_ES
 			#extension GL_EXT_texture_cube_map_array : enable
 		#else
@@ -85,6 +86,7 @@
 		#endif
 		out vec4 FragColor;
 	#else
+		// --- LEGACY PATH (GLES 2.0) ---
 		#extension GL_ARB_shader_texture_lod : enable
 		#ifdef ENABLE_SHADOW
 			uniform samplerCube shadowCubeMap[4];
@@ -101,6 +103,11 @@
 		#define COMPAT_TEXTURE texture2D
 		#define COMPAT_TEXTURE_CUBE textureCube
 		#define COMPAT_TEXTURE_CUBE_LOD textureCubeLod
+		// [CRITICAL FIX] Add Precision for Android GLES 2.0
+		#ifdef GL_ES
+			precision highp float;
+			precision highp int;
+		#endif
 	#endif
 
 	struct Light {
