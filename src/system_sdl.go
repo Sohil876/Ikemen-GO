@@ -26,16 +26,12 @@ func (s *System) newWindow(w, h int) (*Window, error) {
 
 	if runtime.GOOS == "android" {
 	    // Renderer profile setup
-	    // Ask SDL for an ES context
-    	/*sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
-    	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
-    	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
-    	// No forward-compatible / core flags on ES
-    	sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)*/
-		/* if sys.cfg.Video.RenderMode == "OpenGL 2.1" {
+		if sys.cfg.Video.RenderMode == "OpenGL 2.1" {
+		    // Ask SDL for an ES context
 		    sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_ES)
     		sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 2)
     		sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 0)
+    		// No forward-compatible / core flags on ES
     		sdl.GLSetAttribute(sdl.GL_CONTEXT_FLAGS, 0)
     		// GL4ES often needs these buffers explicitly requested on Android
 			sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
@@ -48,7 +44,14 @@ func (s *System) newWindow(w, h int) (*Window, error) {
     		sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
     		sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 0)
     		sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
-		} */
+    		// sdl.SetHint("SDL_VIDEO_EXTERNAL_CONTEXT", "0")
+    		// sdl.SetHint("SDL_HIDAPI_IGNORE_DEVICES", "1")
+    		// sdl.SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1")
+    		// sdl.SetHint(sdl.HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight")
+    		// sdl.SetHint("SDL_ANDROID_TRAP_BACK_BUTTON", "1")
+    		// sdl.SetHint("SDL_JOYSTICK_HIDAPI", "0")
+    		// sdl.SetHint("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH", "1")
+		}
 		// On Android, we MUST use 0,0 or SDL ignores it anyway,
 		// but flags are the critical part.
 		window, err = sdl.CreateWindow(
